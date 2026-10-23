@@ -45,6 +45,7 @@ SRIMUANG_DAYS_BACK = 7          # ศรีเมืองดึงย้อน�
 MIN_TOTAL_ROWS = 100            # ข้อกำหนดข้อสอบ: ข้อมูลรวม >= 100 รายการ
 MIN_VALID_RATIO = 0.8           # แถวที่ผ่านเกณฑ์ต้องไม่น้อยกว่า 80%
 MAX_REASONABLE_PRICE = 100_000  # ราคาเกินนี้ถือว่าผิดปกติ (บาท)
+MAX_PRICE_AGE_DAYS = 30         # ราคาเก่ากว่านี้ถือว่าค้าง (เช่น ตลาดไทบางสินค้า prev เป็นปี 2023)
 
 default_args = {
     "owner": "agri-price",
@@ -235,6 +236,11 @@ def validate_row(r):
         return "ราคา <= 0"
     if r["price_max"] > MAX_REASONABLE_PRICE:
         return f"ราคาเกิน {MAX_REASONABLE_PRICE:,} บาท"
+    age = (datetime.now().date() - datetime.fromisoformat(r["price_date"]).date()).days
+    if age > MAX_PRICE_AGE_DAYS:
+        return f"ราคาค้าง (เก่ากว่า {MAX_PRICE_AGE_DAYS} วัน)"
+    if age < -1:
+        return "วันที่อยู่ในอนาคต"
     return None
 
 
