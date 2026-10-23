@@ -410,7 +410,7 @@ with DAG(
                 task_id=f"extract_{src}",
                 python_callable=extract_source,
                 op_kwargs={"source": src},
-                execution_timeout=timedelta(minutes=5),
+                execution_timeout=timedelta(minutes=20 if src == "talaadthai" else 5),  # ตลาดไท ~1,500 หน้า ใช้ ~5 นาที
             )
 
     transform = PythonOperator(

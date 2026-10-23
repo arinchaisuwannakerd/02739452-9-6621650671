@@ -59,24 +59,67 @@ def _bkk_date(iso_str):
 
 
 # -----------------------------------------------------------------
-# 1) ตลาดไท: web scraping (BeautifulSoup) จากหน้า HTML
-#    robots.txt ห้ามเฉพาะ *.json / *.js -> หน้า /products ดึงได้
-#    ข้อมูลราคาฝังอยู่ใน <script id="__NEXT_DATA__"> ของหน้า HTML
+# 1) ตลาดไท: web scraping (BeautifulSoup) จากหน้า HTML ทีละหน้าสินค้า
+#    robots.txt ห้ามเฉพาะ *.json / *.js -> หน้า /products/... และ sitemap .xml ดึงได้
+#    รายชื่อหน้าสินค้าได้จาก products-sitemap.xml (~1,500 หน้า)
+#    ข้อมูลราคาฝังอยู่ใน <script id="__NEXT_DATA__"> ของแต่ละหน้า HTML
 # -----------------------------------------------------------------
-def extract_talaadthai():
-    url = "https://talaadthai.com/products"
-    resp = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
-    resp.raise_for_status()
-    soup = BeautifulSoup(resp.text, "html.parser")
+TALAADTHAI = "https://talaadthai.com"
+TALAADTHAI_WORKERS = 4        # ดึงพร้อมกันไม่เกิน 4 หน้า
+MAX_PRICE_AGE_DAYS = 30       # ราคาที่ไม่อัปเดตเกินนี้ถือว่าสินค้าไม่มีขายแล้ว ไม่นำเข้า
+
+
+def _next_data(html):
+    soup = BeautifulSoup(html, "html.parser")
     tag = soup.find("script", id="__NEXT_DATA__")
     if tag is None:
-        raise ValueError("ไม่พบ __NEXT_DATA__ ในหน้า talaadthai.com/products (โครงสร้างหน้าเว็บอาจเปลี่ยน)")
-    page = json.loads(tag.string)
-    return page["props"]["pageProps"]["productsPriceTrending"]["data"]
+        raise ValueError("ไม่พบ __NEXT_DATA__ (โครงสร้างหน้าเว็บอาจเปลี่ยน)")
+    return json.loads(tag.string)["props"]["pageProps"]
+
+
+def talaadthai_product_urls():
+    """อ่าน sitemap index -> sitemap ย่อย -> URL หน้าสินค้าทั้งหมด"""
+    index = requests.get(f"{TALAADTHAI}/products-sitemap.xml", headers=HEADERS, timeout=TIMEOUT)
+    index.raise_for_status()
+    urls = []
+    for sm in re.findall(r"<loc>\s*([^<]+?)\s*</loc>", index.text):
+        r = requests.get(sm, headers=HEADERS, timeout=TIMEOUT)
+        r.raise_for_status()
+        urls += re.findall(r"<loc>\s*([^<]+?)\s*</loc>", r.text)
+        time.sleep(POLITE_DELAY / 5)
+    return sorted(set(urls))
+
+
+def _fetch_product(url):
+    """ดึง 1 หน้าสินค้า; หน้าที่ error ข้ามไป (ไม่ทำให้ทั้งแหล่งล้ม)"""
+    time.sleep(POLITE_DELAY / 2)
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+        if r.status_code != 200:
+            return None
+        return _next_data(r.text).get("product")
+    except Exception as e:  # noqa: BLE001
+        print(f"[talaadthai] ข้าม {url}: {e}")
+        return None
+
+
+def extract_talaadthai(max_products=None):
+    from concurrent.futures import ThreadPoolExecutor
+
+    urls = talaadthai_product_urls()
+    if max_products:
+        urls = urls[:max_products]
+    with ThreadPoolExecutor(max_workers=TALAADTHAI_WORKERS) as ex:
+        products = [p for p in ex.map(_fetch_product, urls) if p]
+    print(f"[talaadthai] sitemap {len(urls)} หน้า -> ดึงสำเร็จ {len(products)} หน้า")
+    if not products:
+        raise ValueError("talaadthai: ดึงหน้าสินค้าไม่สำเร็จเลย")
+    return products
 
 
 def normalize_talaadthai(raw_items):
-    rows = []
+    rows, stale = [], 0
+    today = datetime.now(BKK).date()
     for it in raw_items:
         name = (it.get("title") or {}).get("th")
         cats = it.get("categories") or []
@@ -92,16 +135,17 @@ def normalize_talaadthai(raw_items):
             "unit": it.get("unit"),
             "grade": "-",
         }
-        # ราคาวันนี้ + ราคาวันก่อนหน้า (ได้ประวัติราคาเพิ่ม 1 วันต่อการรัน)
-        # ต้นทางใช้ 'YYYY-MM-DDT23:59:59Z' แทนวันที่ จึงตัดเอาเฉพาะส่วนวันที่
+        # ราคาวันล่าสุด + วันก่อนหน้า ต้นทางใช้ 'YYYY-MM-DDT23:59:59Z' แทนวันที่ จึงตัดเฉพาะส่วนวันที่
         for key in ("current", "prev"):
             p = snap.get(key)
-            if p and p.get("date"):
-                rows.append({**base, "price_min": p.get("minPrice"), "price_max": p.get("maxPrice"),
-                             "price_date": p["date"][:10]})
-        if not snap and it.get("priceMaxThb") is not None:
-            rows.append({**base, "price_min": it.get("priceMinThb"), "price_max": it.get("priceMaxThb"),
-                         "price_date": datetime.now(BKK).date().isoformat()})
+            if not (p and p.get("date")) or p.get("maxPrice") is None:
+                continue
+            d = p["date"][:10]
+            if (today - datetime.fromisoformat(d).date()).days > MAX_PRICE_AGE_DAYS:
+                stale += 1  # สินค้าที่เลิกอัปเดตราคา (บางตัวค้างตั้งแต่ปี 2023)
+                continue
+            rows.append({**base, "price_min": p.get("minPrice"), "price_max": p.get("maxPrice"), "price_date": d})
+    print(f"[talaadthai] ตัดราคาค้างเกิน {MAX_PRICE_AGE_DAYS} วัน {stale} แถว")
     return rows
 
 
