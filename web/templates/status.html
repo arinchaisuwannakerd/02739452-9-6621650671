@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}สถานะ Pipeline{% endblock %}
+{% block content %}
+
+<section class="card">
+  <h2>ความสดของข้อมูลแต่ละตลาด</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>ตลาด</th><th>วันที่ราคาล่าสุด</th><th>จำนวนแถว</th><th>อัปเดตล่าสุด (เวลาไทย)</th></tr></thead>
+      <tbody>
+      {% for r in freshness %}
+        <tr><td>{{ r.market }}</td><td>{{ r.latest }}</td><td class="num">{{ "{:,}".format(r.rows) }}</td>
+          <td>{{ r.updated.astimezone(None).strftime('%Y-%m-%d %H:%M') if r.updated }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card" style="margin-top:16px">
+  <h2>ประวัติการรัน DAG <code>agri_price_pipeline</code> (30 รอบล่าสุด)</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Run ID</th><th>เสร็จเมื่อ</th><th>ตลาดไท</th><th>สี่มุมเมือง</th><th>ศรีเมือง</th>
+        <th>ดึงได้</th><th>หลังตัดซ้ำ</th><th>ไม่ผ่าน QC</th><th>โหลด</th><th>QC</th><th>แถวในฐาน</th></tr></thead>
+      <tbody>
+      {% for r in runs %}
+        <tr>
+          <td title="{{ r.run_id }}">{{ r.run_id[:40] }}</td>
+          <td>{{ r.finished_at.strftime('%Y-%m-%d %H:%M') if r.finished_at }}</td>
+          {% for src in ['talaadthai', 'simummuang', 'srimuang'] %}
+            {% set s = (r.source_status or {}).get(src, {}) %}
+            <td>
+              {% if s.get('state') == 'success' %}<span class="pill ok">สำเร็จ</span>
+              {% elif s.get('state') in ['failed', 'upstream_failed'] %}<span class="pill fail">ล่ม</span>
+              {% else %}<span class="pill skip">{{ s.get('state') or '-' }}</span>{% endif %}
+              <span class="muted">{{ s.get('rows', 0) }}</span>
+            </td>
+          {% endfor %}
+          <td class="num">{{ r.rows_extracted }}</td><td class="num">{{ r.rows_after_dedupe }}</td>
+          <td class="num">{{ r.rows_invalid }}</td><td class="num">{{ r.rows_loaded }}</td>
+          <td>{% if r.quality_passed %}<span class="pill ok">ผ่าน</span>{% else %}<span class="pill fail">ไม่ผ่าน</span>{% endif %}</td>
+          <td class="num">{{ "{:,}".format(r.total_rows_in_db or 0) }}</td>
+        </tr>
+        <tr><td colspan="11" class="muted" style="white-space:normal">{{ r.quality_message }}</td></tr>
+      {% else %}
+        <tr><td colspan="11" class="muted">ยังไม่มีการรัน</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card" style="margin-top:16px">
+  <h2>แถวที่ถูกคัดออก (agri_prices_rejected)</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>แหล่ง</th><th>เหตุผล</th><th>จำนวน</th></tr></thead>
+      <tbody>
+      {% for r in rejected %}
+        <tr><td>{{ r.source }}</td><td>{{ r.reason }}</td><td class="num">{{ r.n }}</td></tr>
+      {% else %}
+        <tr><td colspan="3" class="muted">ไม่มีแถวที่ถูกคัดออก</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

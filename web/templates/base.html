@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ราคาผักผลไม้ 3 ตลาด{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root { --bg:#f5f7f2; --card:#fff; --ink:#1f2a1f; --muted:#6b7a6b; --line:#e2e8dc;
+            --brand:#2f7d32; --c1:#2f7d32; --c2:#e08a1e; --c3:#2a6fb0; --bad:#c0392b; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:'Sarabun', system-ui, sans-serif; background:var(--bg); color:var(--ink); font-size:15px; }
+    header { background:var(--brand); color:#fff; padding:14px 24px; display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
+    header h1 { margin:0; font-size:20px; }
+    header nav a { color:#fff; text-decoration:none; margin-right:16px; opacity:.85; }
+    header nav a.active, header nav a:hover { opacity:1; text-decoration:underline; }
+    main { padding:20px 24px; max-width:1400px; margin:0 auto; }
+    .grid { display:grid; gap:16px; }
+    .kpis { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+    .two { grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; }
+    .kpi .label { color:var(--muted); font-size:13px; }
+    .kpi .value { font-size:28px; font-weight:700; margin-top:4px; }
+    .kpi .sub { color:var(--muted); font-size:12px; }
+    h2 { font-size:17px; margin:0 0 12px; }
+    form.filters { display:flex; gap:10px; flex-wrap:wrap; align-items:end; }
+    form.filters label { display:flex; flex-direction:column; font-size:12px; color:var(--muted); gap:4px; }
+    select, input, button { font:inherit; padding:7px 10px; border:1px solid var(--line); border-radius:6px; background:#fff; }
+    button { background:var(--brand); color:#fff; border:none; cursor:pointer; }
+    a.reset { font-size:13px; color:var(--muted); align-self:center; }
+    .table-wrap { overflow-x:auto; max-height:560px; overflow-y:auto; }
+    table { border-collapse:collapse; width:100%; font-size:14px; }
+    th, td { padding:7px 10px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; }
+    th { position:sticky; top:0; background:#eef3ea; z-index:1; }
+    td.num { text-align:right; font-variant-numeric: tabular-nums; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:99px; font-size:12px; color:#fff; }
+    .ok { background:var(--c1); } .fail { background:var(--bad); } .skip { background:#999; }
+    .muted { color:var(--muted); font-size:13px; }
+    canvas { max-height:340px; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>🥬 ราคาผัก-ผลไม้ขายส่ง 3 ตลาด</h1>
+  <nav>
+    <a href="/" class="{{ 'active' if request.path == '/' }}">Dashboard</a>
+    <a href="/status" class="{{ 'active' if request.path == '/status' }}">สถานะ Pipeline</a>
+  </nav>
+</header>
+<main>
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>

@@ -1,0 +1,6 @@
+# library เพิ่มเติมสำหรับ Airflow (ติดตั้งใน image ผ่าน Dockerfile)
+apache-airflow-providers-postgres
+requests
+beautifulsoup4
+certifi
+psycopg2-binary
