@@ -5,52 +5,123 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}ราคาผักผลไม้ 3 ตลาด{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
-    :root { --bg:#f5f7f2; --card:#fff; --ink:#1f2a1f; --muted:#6b7a6b; --line:#e2e8dc;
-            --brand:#2f7d32; --c1:#2f7d32; --c2:#e08a1e; --c3:#2a6fb0; --bad:#c0392b; }
+    :root {
+      --bg: #f3f5ef; --card: #ffffff; --ink: #18241a; --muted: #6a776b; --line: #e3e8dd;
+      --brand: #1f6b3a; --brand-2: #2f8f4e; --brand-soft: #e7f2ea;
+      --c1: #2f8f4e; --c2: #e38b1f; --c3: #2e6fb5; --bad: #c4432f; --warn: #d79b18;
+      --radius: 14px; --shadow: 0 1px 2px rgba(20,40,20,.05), 0 6px 20px rgba(20,40,20,.06);
+    }
     * { box-sizing: border-box; }
-    body { margin:0; font-family:'Sarabun', system-ui, sans-serif; background:var(--bg); color:var(--ink); font-size:15px; }
-    header { background:var(--brand); color:#fff; padding:14px 24px; display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
-    header h1 { margin:0; font-size:20px; }
-    header nav a { color:#fff; text-decoration:none; margin-right:16px; opacity:.85; }
-    header nav a.active, header nav a:hover { opacity:1; text-decoration:underline; }
-    main { padding:20px 24px; max-width:1400px; margin:0 auto; }
-    .grid { display:grid; gap:16px; }
-    .kpis { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
-    .two { grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); }
-    .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; }
-    .kpi .label { color:var(--muted); font-size:13px; }
-    .kpi .value { font-size:28px; font-weight:700; margin-top:4px; }
-    .kpi .sub { color:var(--muted); font-size:12px; }
-    h2 { font-size:17px; margin:0 0 12px; }
-    form.filters { display:flex; gap:10px; flex-wrap:wrap; align-items:end; }
-    form.filters label { display:flex; flex-direction:column; font-size:12px; color:var(--muted); gap:4px; }
-    select, input, button { font:inherit; padding:7px 10px; border:1px solid var(--line); border-radius:6px; background:#fff; }
-    button { background:var(--brand); color:#fff; border:none; cursor:pointer; }
-    a.reset { font-size:13px; color:var(--muted); align-self:center; }
-    .table-wrap { overflow-x:auto; max-height:560px; overflow-y:auto; }
-    table { border-collapse:collapse; width:100%; font-size:14px; }
-    th, td { padding:7px 10px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; }
-    th { position:sticky; top:0; background:#eef3ea; z-index:1; }
-    td.num { text-align:right; font-variant-numeric: tabular-nums; }
-    .pill { display:inline-block; padding:2px 8px; border-radius:99px; font-size:12px; color:#fff; }
-    .ok { background:var(--c1); } .fail { background:var(--bad); } .skip { background:#999; }
-    .muted { color:var(--muted); font-size:13px; }
-    canvas { max-height:340px; }
+    body { margin: 0; font-family: 'IBM Plex Sans Thai', system-ui, sans-serif; background: var(--bg);
+           color: var(--ink); font-size: 15px; line-height: 1.5; }
+    a { color: var(--brand-2); }
+
+    /* ---------- header ---------- */
+    header.top { background: linear-gradient(120deg, #164f2b 0%, #1f6b3a 45%, #3b8f4c 100%); color: #fff;
+                 padding: 22px 28px 64px; position: relative; overflow: hidden; }
+    header.top::after { content: ""; position: absolute; right: -60px; top: -80px; width: 320px; height: 320px;
+                        border-radius: 50%; background: rgba(255,255,255,.06); }
+    .top-inner { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between;
+                 align-items: center; gap: 16px; flex-wrap: wrap; position: relative; z-index: 1; }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand .logo { width: 46px; height: 46px; border-radius: 12px; background: rgba(255,255,255,.15);
+                   display: grid; place-items: center; font-size: 24px; }
+    .brand h1 { margin: 0; font-size: 21px; font-weight: 700; letter-spacing: .2px; }
+    .brand p { margin: 2px 0 0; font-size: 13px; opacity: .8; }
+    nav.tabs { display: flex; gap: 6px; background: rgba(255,255,255,.12); padding: 4px; border-radius: 10px; }
+    nav.tabs a { color: #fff; text-decoration: none; padding: 7px 16px; border-radius: 8px; font-size: 14px;
+                 font-weight: 500; opacity: .85; }
+    nav.tabs a:hover { opacity: 1; background: rgba(255,255,255,.1); }
+    nav.tabs a.active { background: #fff; color: var(--brand); opacity: 1; }
+
+    main { padding: 0 28px 40px; max-width: 1400px; margin: -40px auto 0; position: relative; z-index: 2; }
+
+    /* ---------- cards ---------- */
+    .grid { display: grid; gap: 18px; }
+    .kpis { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    .two { grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+            padding: 18px 20px; box-shadow: var(--shadow); }
+    .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+    h2 { font-size: 16px; font-weight: 600; margin: 0; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .section-gap { margin-top: 18px; }
+
+    /* KPI */
+    .kpi { display: flex; gap: 14px; align-items: flex-start; position: relative; overflow: hidden; }
+    .kpi::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent, var(--brand-2)); }
+    .kpi .icon { width: 42px; height: 42px; flex: none; border-radius: 11px; display: grid; place-items: center;
+                 font-size: 20px; background: var(--accent-soft, var(--brand-soft)); }
+    .kpi .label { color: var(--muted); font-size: 13px; }
+    .kpi .value { font-size: 27px; font-weight: 700; line-height: 1.2; margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .kpi .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+    /* filters */
+    .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; align-items: end; }
+    .filters label { display: flex; flex-direction: column; font-size: 12px; font-weight: 500; color: var(--muted); gap: 5px; }
+    select, input { font: inherit; font-size: 14px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px;
+                    background: #fbfcfa; color: var(--ink); transition: border-color .15s, box-shadow .15s; width: 100%; }
+    select:focus, input:focus { outline: none; border-color: var(--brand-2); box-shadow: 0 0 0 3px rgba(47,143,78,.15); }
+    .actions { display: flex; gap: 8px; align-items: center; }
+    button { font: inherit; font-weight: 600; padding: 9px 20px; border: none; border-radius: 9px; cursor: pointer;
+             background: var(--brand-2); color: #fff; transition: background .15s; }
+    button:hover { background: var(--brand); }
+    a.reset { font-size: 13px; color: var(--muted); text-decoration: none; padding: 9px 10px; border-radius: 9px; }
+    a.reset:hover { background: #f0f3ee; color: var(--ink); }
+
+    /* chips */
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+    .chip { font-size: 12px; padding: 3px 10px; border-radius: 99px; background: var(--brand-soft); color: var(--brand); }
+
+    /* tables */
+    .table-wrap { overflow: auto; max-height: 580px; border: 1px solid var(--line); border-radius: 10px; }
+    table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 14px; }
+    th, td { padding: 9px 12px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+    th { position: sticky; top: 0; background: #f6f8f3; z-index: 1; font-weight: 600; font-size: 13px; color: #415043; }
+    tbody tr:nth-child(even) td { background: #fbfcfa; }
+    tbody tr:hover td { background: #eef6f0; }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td.strong { font-weight: 600; }
+    .mk { display: inline-flex; align-items: center; gap: 7px; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; background: #999; }
+
+    .pill { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 500; }
+    .ok { background: #e3f3e7; color: #1d6b37; } .fail { background: #fbe5e1; color: #a5321f; } .skip { background: #eee; color: #666; }
+
+    canvas { max-height: 330px; }
+    footer { text-align: center; color: var(--muted); font-size: 12px; padding: 10px 0 30px; }
+
+    @media (max-width: 640px) {
+      header.top { padding: 18px 16px 60px; }
+      main { padding: 0 16px 30px; }
+      .two { grid-template-columns: 1fr; }
+      .kpi .value { font-size: 23px; }
+    }
   </style>
 </head>
 <body>
-<header>
-  <h1>🥬 ราคาผัก-ผลไม้ขายส่ง 3 ตลาด</h1>
-  <nav>
-    <a href="/" class="{{ 'active' if request.path == '/' }}">Dashboard</a>
-    <a href="/status" class="{{ 'active' if request.path == '/status' }}">สถานะ Pipeline</a>
-  </nav>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <div class="logo">🥬</div>
+      <div>
+        <h1>ราคาผัก-ผลไม้ขายส่ง 3 ตลาดกลาง</h1>
+        <p>ตลาดไท · ตลาดสี่มุมเมือง · ตลาดศรีเมือง — รวบรวมด้วย Apache Airflow → PostgreSQL</p>
+      </div>
+    </div>
+    <nav class="tabs">
+      <a href="/" class="{{ 'active' if request.path == '/' }}">📊 Dashboard</a>
+      <a href="/status" class="{{ 'active' if request.path == '/status' }}">🩺 สถานะ Pipeline</a>
+    </nav>
+  </div>
 </header>
 <main>
 {% block content %}{% endblock %}
 </main>
+<footer>02739452 แพลตฟอร์มข้อมูลขนาดใหญ่และการวิเคราะห์ · ข้อมูลอ่านจาก PostgreSQL โดยตรง</footer>
 </body>
 </html>

@@ -1,79 +1,113 @@
 {% extends "base.html" %}
 {% block content %}
+{% set MK = {'ตลาดไท':'#2f8f4e','ตลาดสี่มุมเมือง':'#e38b1f','ตลาดศรีเมือง':'#2e6fb5'} %}
 
-<form class="card filters" method="get" style="margin-bottom:16px">
-  <label>ตลาด
-    <select name="market">
-      <option value="">ทุกตลาด</option>
-      {% for m in markets %}<option value="{{ m }}" {{ 'selected' if f.market == m }}>{{ m }}</option>{% endfor %}
-    </select>
-  </label>
-  <label>หมวดหมู่
-    <select name="category">
-      <option value="">ทุกหมวด</option>
-      {% for c in categories %}<option value="{{ c }}" {{ 'selected' if f.category == c }}>{{ c }}</option>{% endfor %}
-    </select>
-  </label>
-  <label>วันที่
-    <select name="date">
-      <option value="">ล่าสุดของแต่ละตลาด</option>
-      {% for d in dates %}<option value="{{ d }}" {{ 'selected' if f.date == d }}>{{ d }}</option>{% endfor %}
-    </select>
-  </label>
-  <label>ค้นหาสินค้า
-    <input name="q" value="{{ f.q }}" placeholder="เช่น มะนาว, คะน้า">
-  </label>
-  <label>สินค้าสำหรับกราฟแนวโน้ม
-    <select name="product">
-      {% for p in product_options %}
-      <option value="{{ p.product_key }}" {{ 'selected' if product == p.product_key }}>{{ p.display_name }} ({{ p.market_count }} ตลาด)</option>
-      {% endfor %}
-    </select>
-  </label>
-  <button type="submit">กรอง</button>
-  <a class="reset" href="/">ล้างตัวกรอง</a>
+<form class="card" method="get">
+  <div class="filters" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end">
+    <label>🏪 ตลาด
+      <select name="market">
+        <option value="">ทุกตลาด</option>
+        {% for m in markets %}<option value="{{ m }}" {{ 'selected' if f.market == m }}>{{ m }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>🗂️ หมวดหมู่
+      <select name="category">
+        <option value="">ทุกหมวด</option>
+        {% for c in categories %}<option value="{{ c }}" {{ 'selected' if f.category == c }}>{{ c }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>📅 วันที่
+      <select name="date">
+        <option value="">ล่าสุดของแต่ละตลาด</option>
+        {% for d in dates %}<option value="{{ d }}" {{ 'selected' if f.date == d }}>{{ d }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>🔎 ค้นหาสินค้า
+      <input name="q" value="{{ f.q }}" placeholder="เช่น มะนาว, คะน้า">
+    </label>
+    <label>📈 สินค้าสำหรับกราฟแนวโน้ม
+      <select name="product">
+        {% for p in product_options %}
+        <option value="{{ p.product_key }}" {{ 'selected' if product == p.product_key }}>{{ p.display_name }} ({{ p.market_count }} ตลาด)</option>
+        {% endfor %}
+      </select>
+    </label>
+    <div class="actions">
+      <button type="submit">กรองข้อมูล</button>
+      <a class="reset" href="/">ล้าง</a>
+    </div>
+  </div>
+  {% if f.market or f.category or f.date or f.q %}
+  <div class="chips">
+    {% if f.market %}<span class="chip">ตลาด: {{ f.market }}</span>{% endif %}
+    {% if f.category %}<span class="chip">หมวด: {{ f.category }}</span>{% endif %}
+    {% if f.date %}<span class="chip">วันที่: {{ f.date }}</span>{% endif %}
+    {% if f.q %}<span class="chip">ค้นหา: “{{ f.q }}”</span>{% endif %}
+  </div>
+  {% endif %}
 </form>
 
-<section class="grid kpis">
-  <div class="card kpi"><div class="label">รายการราคา (ตามตัวกรอง)</div><div class="value">{{ "{:,}".format(kpi.rows) }}</div><div class="sub">ทั้งฐานข้อมูล {{ "{:,}".format(kpi_total.rows) }} แถว</div></div>
-  <div class="card kpi"><div class="label">จำนวนสินค้า</div><div class="value">{{ "{:,}".format(kpi.products) }}</div><div class="sub">มีขาย ≥ 2 ตลาด {{ kpi_total.cross_products }} สินค้า</div></div>
-  <div class="card kpi"><div class="label">จำนวนตลาด</div><div class="value">{{ kpi.markets }}</div><div class="sub">ข้อมูล {{ kpi_total.days }} วัน</div></div>
-  <div class="card kpi"><div class="label">ราคาเฉลี่ย</div><div class="value">{{ kpi.avg_price or '-' }}</div><div class="sub">บาท/หน่วย (ตามตัวกรอง)</div></div>
-  <div class="card kpi"><div class="label">ข้อมูลล่าสุด</div><div class="value" style="font-size:22px">{{ kpi.latest or '-' }}</div><div class="sub">วันที่ราคา</div></div>
+<section class="grid kpis section-gap">
+  <div class="card kpi" style="--accent:#2f8f4e;--accent-soft:#e3f3e7">
+    <div class="icon">🧾</div>
+    <div><div class="label">รายการราคา (ตามตัวกรอง)</div><div class="value">{{ "{:,}".format(kpi.rows) }}</div>
+      <div class="sub">ทั้งฐานข้อมูล {{ "{:,}".format(kpi_total.rows) }} แถว</div></div>
+  </div>
+  <div class="card kpi" style="--accent:#e38b1f;--accent-soft:#fcefdc">
+    <div class="icon">🥕</div>
+    <div><div class="label">จำนวนสินค้า</div><div class="value">{{ "{:,}".format(kpi.products) }}</div>
+      <div class="sub">มีขาย ≥ 2 ตลาด {{ kpi_total.cross_products }} สินค้า</div></div>
+  </div>
+  <div class="card kpi" style="--accent:#2e6fb5;--accent-soft:#e2ecf8">
+    <div class="icon">🏪</div>
+    <div><div class="label">จำนวนตลาด</div><div class="value">{{ kpi.markets }}</div>
+      <div class="sub">ข้อมูลรวม {{ kpi_total.days }} วัน</div></div>
+  </div>
+  <div class="card kpi" style="--accent:#8a5cc2;--accent-soft:#efe7f8">
+    <div class="icon">💰</div>
+    <div><div class="label">ราคาเฉลี่ย</div><div class="value">{{ kpi.avg_price or '-' }}</div>
+      <div class="sub">บาท/หน่วย (ตามตัวกรอง)</div></div>
+  </div>
+  <div class="card kpi" style="--accent:#c4432f;--accent-soft:#fbe5e1">
+    <div class="icon">🕒</div>
+    <div><div class="label">ข้อมูลล่าสุด</div><div class="value" style="font-size:22px">{{ kpi.latest or '-' }}</div>
+      <div class="sub">วันที่ราคา</div></div>
+  </div>
 </section>
 
-<section class="grid two" style="margin-top:16px">
+<section class="grid two section-gap">
   <div class="card">
-    <h2>เปรียบเทียบราคาเฉลี่ย (บาท/กก.) สินค้าเดียวกันข้ามตลาด</h2>
+    <div class="card-head"><h2>⚖️ เปรียบเทียบราคาเฉลี่ยข้ามตลาด</h2><span class="muted">บาท/กก.</span></div>
     <canvas id="compareChart"></canvas>
-    <p class="muted">สินค้าที่จับคู่ได้ตั้งแต่ 2 ตลาดขึ้นไป (จาก product_master) ราคาล่าสุดของแต่ละตลาด</p>
+    <p class="muted" style="margin:10px 0 0">สินค้าที่จับคู่ได้ตั้งแต่ 2 ตลาดขึ้นไป (จาก product_master) ใช้ราคาล่าสุดของแต่ละตลาด</p>
   </div>
   <div class="card">
-    <h2>แนวโน้มราคา: {{ (product_options | selectattr('product_key','equalto',product) | map(attribute='display_name') | first) or product }}</h2>
+    <div class="card-head"><h2>📈 แนวโน้มราคา: {{ (product_options | selectattr('product_key','equalto',product) | map(attribute='display_name') | first) or product }}</h2><span class="muted">รายวัน</span></div>
     <canvas id="trendChart"></canvas>
-    <p class="muted">ราคาเฉลี่ยรายวันแยกตามตลาด</p>
+    <p class="muted" style="margin:10px 0 0">ราคาเฉลี่ยรายวันแยกตามตลาด เลือกสินค้าอื่นได้จากตัวกรองด้านบน</p>
   </div>
   <div class="card">
-    <h2>จำนวนรายการแยกตามตลาด</h2>
+    <div class="card-head"><h2>🏪 จำนวนรายการแยกตามตลาด</h2></div>
     <canvas id="marketChart"></canvas>
   </div>
   <div class="card">
-    <h2>จำนวนรายการแยกตามหมวดหมู่</h2>
+    <div class="card-head"><h2>🗂️ จำนวนรายการแยกตามหมวดหมู่</h2></div>
     <canvas id="categoryChart"></canvas>
   </div>
 </section>
 
-<section class="card" style="margin-top:16px">
-  <h2>ตารางราคา ({{ rows|length }} แถวแรก)</h2>
+<section class="card section-gap">
+  <div class="card-head"><h2>📋 ตารางราคา</h2><span class="muted">แสดง {{ rows|length }} แถวแรก</span></div>
   <div class="table-wrap">
     <table>
       <thead><tr><th>ตลาด</th><th>สินค้า</th><th>หมวด</th><th>เกรด/ขนาด</th><th>หน่วย</th>
-        <th>ต่ำสุด</th><th>สูงสุด</th><th>เฉลี่ย</th><th>วันที่</th></tr></thead>
+        <th style="text-align:right">ต่ำสุด</th><th style="text-align:right">สูงสุด</th><th style="text-align:right">เฉลี่ย</th><th>วันที่</th></tr></thead>
       <tbody>
       {% for r in rows %}
-        <tr><td>{{ r.market }}</td><td>{{ r.product_name }}</td><td>{{ r.category or '' }}</td><td>{{ r.grade }}</td>
+        <tr><td><span class="mk"><span class="dot" style="background:{{ MK.get(r.market, '#999') }}"></span>{{ r.market }}</span></td>
+          <td class="strong">{{ r.product_name }}</td><td>{{ r.category or '' }}</td><td>{{ r.grade }}</td>
           <td>{{ r.unit or '' }}</td><td class="num">{{ r.price_min }}</td><td class="num">{{ r.price_max }}</td>
-          <td class="num">{{ r.price_avg }}</td><td>{{ r.price_date }}</td></tr>
+          <td class="num strong">{{ r.price_avg }}</td><td>{{ r.price_date }}</td></tr>
       {% else %}
         <tr><td colspan="9" class="muted">ไม่พบข้อมูลตามตัวกรอง</td></tr>
       {% endfor %}
@@ -83,8 +117,19 @@
 </section>
 
 <script>
-const COLORS = {'ตลาดไท':'#2f7d32','ตลาดสี่มุมเมือง':'#e08a1e','ตลาดศรีเมือง':'#2a6fb0'};
+Chart.defaults.font.family = "'IBM Plex Sans Thai', system-ui, sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = '#5d6b5f';
+Chart.defaults.borderColor = '#edf0ea';
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.boxWidth = 8;
+Chart.defaults.plugins.tooltip.backgroundColor = '#18241a';
+Chart.defaults.plugins.tooltip.padding = 10;
+Chart.defaults.plugins.tooltip.cornerRadius = 8;
+
+const COLORS = {{ MK | tojson }};
 const color = m => COLORS[m] || '#888';
+const fmt = v => v == null ? '-' : Number(v).toLocaleString('th-TH', {maximumFractionDigits: 2});
 
 const compare = {{ compare | tojson }};
 const names = [...new Map(compare.map(r => [r.product_key, r.display_name])).entries()];
@@ -92,9 +137,10 @@ const cMarkets = [...new Set(compare.map(r => r.market))];
 new Chart(document.getElementById('compareChart'), {
   type: 'bar',
   data: { labels: names.map(n => n[1]),
-    datasets: cMarkets.map(m => ({ label: m, backgroundColor: color(m),
+    datasets: cMarkets.map(m => ({ label: m, backgroundColor: color(m), borderRadius: 5, maxBarThickness: 18,
       data: names.map(([k]) => { const r = compare.find(x => x.product_key === k && x.market === m); return r ? Number(r.price_avg) : null; }) })) },
-  options: { responsive: true, scales: { y: { beginAtZero: true, title: { display: true, text: 'บาท/กก.' } } } }
+  options: { responsive: true, plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmt(c.raw)} บาท/กก.` } } },
+    scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
 });
 
 const trend = {{ trend | tojson }};
@@ -102,24 +148,30 @@ const tDates = [...new Set(trend.map(r => r.d))].sort();
 const tMarkets = [...new Set(trend.map(r => r.market))];
 new Chart(document.getElementById('trendChart'), {
   type: 'line',
-  data: { labels: tDates, datasets: tMarkets.map(m => ({ label: m, borderColor: color(m), backgroundColor: color(m),
-    spanGaps: true, tension: .2,
+  data: { labels: tDates, datasets: tMarkets.map(m => ({ label: m, borderColor: color(m), backgroundColor: color(m) + '22',
+    fill: tMarkets.length === 1, spanGaps: true, tension: .3, borderWidth: 2.5, pointRadius: 3, pointHoverRadius: 6,
     data: tDates.map(d => { const r = trend.find(x => x.d === d && x.market === m); return r ? Number(r.price) : null; }) })) },
-  options: { responsive: true, scales: { y: { title: { display: true, text: 'บาท/หน่วย' } } } }
+  options: { responsive: true, interaction: { mode: 'index', intersect: false },
+    plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmt(c.raw)} บาท` } } },
+    scales: { x: { grid: { display: false } }, y: { title: { display: true, text: 'บาท/หน่วย' } } } }
 });
 
 const byMarket = {{ by_market | tojson }};
 new Chart(document.getElementById('marketChart'), {
-  type: 'bar',
-  data: { labels: byMarket.map(r => r.market), datasets: [{ label: 'รายการ', data: byMarket.map(r => r.n), backgroundColor: byMarket.map(r => color(r.market)) }] },
-  options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  type: 'doughnut',
+  data: { labels: byMarket.map(r => r.market),
+    datasets: [{ data: byMarket.map(r => r.n), backgroundColor: byMarket.map(r => color(r.market)), borderColor: '#fff', borderWidth: 3, hoverOffset: 8 }] },
+  options: { cutout: '62%', plugins: { legend: { position: 'right' },
+    tooltip: { callbacks: { label: c => `${c.label}: ${fmt(c.raw)} รายการ` } } } }
 });
 
 const byCat = {{ by_category | tojson }};
 new Chart(document.getElementById('categoryChart'), {
   type: 'bar',
-  data: { labels: byCat.map(r => r.category), datasets: [{ label: 'รายการ', data: byCat.map(r => r.n), backgroundColor: '#7aa874' }] },
-  options: { indexAxis: 'y', plugins: { legend: { display: false } } }
+  data: { labels: byCat.map(r => r.category),
+    datasets: [{ label: 'รายการ', data: byCat.map(r => r.n), borderRadius: 5, maxBarThickness: 22,
+      backgroundColor: byCat.map((_, i) => `hsl(${140 - i * 9}, 42%, ${38 + i * 4}%)`) }] },
+  options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { y: { grid: { display: false } } } }
 });
 </script>
 {% endblock %}
